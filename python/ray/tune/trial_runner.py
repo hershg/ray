@@ -45,13 +45,16 @@ def _find_newest_ckpt(ckpt_dir):
     ]
     return max(full_paths)
 
+
 def _find_newest_searcher_ckpt(ckpt_dir):
     """Returns path to most recently modified checkpoint."""
     full_paths = [
         os.path.join(ckpt_dir, fname) for fname in os.listdir(ckpt_dir)
-        if fname.startswith("experiment_state_searcher_ckpt") and fname.endswith(".json")
+        if fname.startswith("experiment_state_searcher_ckpt")
+        and fname.endswith(".json")
     ]
     return max(full_paths)
+
 
 class _TuneFunctionEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -286,7 +289,7 @@ class TrialRunner(object):
 
         try:
             ckpt_tmp_file_name = os.path.join(self._local_checkpoint_dir,
-                                         ".tmp_searcher_ckpt")
+                                              ".tmp_searcher_ckpt")
             self._search_alg.save(ckpt_tmp_file_name)
             os.rename(ckpt_tmp_file_name, self.searcher_checkpoint_file)
         except NotImplementedError:
@@ -329,7 +332,8 @@ class TrialRunner(object):
             self.add_trial(trial)
 
         try:
-            newest_searcher_ckpt_path = _find_newest_searcher_ckpt(self._local_checkpoint_dir)
+            newest_searcher_ckpt_path = _find_newest_searcher_ckpt(
+                self._local_checkpoint_dir)
             self._search_alg.restore(newest_searcher_ckpt_path)
         except NotImplementedError:
             pass
