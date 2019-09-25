@@ -45,6 +45,13 @@ def _find_newest_ckpt(ckpt_dir):
     ]
     return max(full_paths)
 
+def _find_newest_searcher_ckpt(ckpt_dir):
+    """Returns path to most recently modified checkpoint."""
+    full_paths = [
+        os.path.join(ckpt_dir, fname) for fname in os.listdir(ckpt_dir)
+        if fname.startswith("experiment_state_searcher_ckpt") and fname.endswith(".json")
+    ]
+    return max(full_paths)
 
 class _TuneFunctionEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -100,6 +107,7 @@ class TrialRunner(object):
     """
 
     CKPT_FILE_TMPL = "experiment_state-{}.json"
+    SEARCHER_CKPT_FILE_TMPL = "experiment_state_searcher_ckpt-{}"
     VALID_RESUME_TYPES = [True, "LOCAL", "REMOTE", "PROMPT"]
 
     def __init__(self,
@@ -181,10 +189,14 @@ class TrialRunner(object):
         self._session_str = datetime.fromtimestamp(
             self._start_time).strftime("%Y-%m-%d_%H-%M-%S")
         self.checkpoint_file = None
+        self.searcher_checkpoint_file = None
         if self._local_checkpoint_dir:
             self.checkpoint_file = os.path.join(
                 self._local_checkpoint_dir,
                 TrialRunner.CKPT_FILE_TMPL.format(self._session_str))
+            self.searcher_checkpoint_file = os.path.join(
+                self._local_checkpoint_dir,
+                TrialRunner.SEARCHER_CKPT_FILE_TMPL.format(self._session_str))
 
     def _validate_resume(self, resume_type):
         """Checks whether to resume experiment.
@@ -271,6 +283,15 @@ class TrialRunner(object):
             json.dump(runner_state, f, indent=2, cls=_TuneFunctionEncoder)
 
         os.rename(tmp_file_name, self.checkpoint_file)
+
+        try:
+            ckpt_tmp_file_name = os.path.join(self._local_checkpoint_dir,
+                                         ".tmp_searcher_ckpt")
+            self._search_alg.save(ckpt_tmp_file_name)
+            os.rename(ckpt_tmp_file_name, self.searcher_checkpoint_file)
+        except NotImplementedError:
+            pass
+
         if force:
             self._syncer.sync_up()
         else:
@@ -306,6 +327,12 @@ class TrialRunner(object):
         for trial in sorted(
                 trials, key=lambda t: t.last_update_time, reverse=True):
             self.add_trial(trial)
+
+        try:
+            newest_searcher_ckpt_path = _find_newest_searcher_ckpt(self._local_checkpoint_dir)
+            self._search_alg.restore(newest_searcher_ckpt_path)
+        except NotImplementedError:
+            pass
 
     def is_finished(self):
         """Returns whether all trials have finished running."""
