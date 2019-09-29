@@ -293,8 +293,9 @@ class TrialRunner(object):
             self._search_alg.save(ckpt_tmp_file_name)
             os.rename(ckpt_tmp_file_name, self.searcher_checkpoint_file)
         except NotImplementedError:
-            logger.warning("Unable to save search alg: not implemented.")
-            pass
+            logger.warning(
+                "Unable to save search alg {}: not implemented.".format(
+                    self._search_alg.__class__.__name__))
 
         if force:
             self._syncer.sync_up()
@@ -337,8 +338,9 @@ class TrialRunner(object):
                 self._local_checkpoint_dir)
             self._search_alg.restore(newest_searcher_ckpt_path)
         except NotImplementedError:
-            logger.warning("Unable to restore search alg: not implemented.")
-            pass
+            logger.warning(
+                "Unable to restore search alg {}: not implemented.".format(
+                    self._search_alg.__class__.__name__))
 
     def is_finished(self):
         """Returns whether all trials have finished running."""
