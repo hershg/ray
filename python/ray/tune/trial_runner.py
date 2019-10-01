@@ -51,7 +51,7 @@ def _find_newest_searcher_ckpt(ckpt_dir):
     full_paths = [
         os.path.join(ckpt_dir, fname) for fname in os.listdir(ckpt_dir)
         if fname.startswith("experiment_state_searcher_ckpt")
-        and fname.endswith(".json")
+        and fname.endswith(".pkl")
     ]
     return max(full_paths)
 
@@ -110,7 +110,7 @@ class TrialRunner(object):
     """
 
     CKPT_FILE_TMPL = "experiment_state-{}.json"
-    SEARCHER_CKPT_FILE_TMPL = "experiment_state_searcher_ckpt-{}"
+    SEARCHER_CKPT_FILE_TMPL = "experiment_state_searcher_ckpt-{}.pkl"
     VALID_RESUME_TYPES = [True, "LOCAL", "REMOTE", "PROMPT"]
 
     def __init__(self,
@@ -248,6 +248,14 @@ class TrialRunner(object):
         return any(
             (fname.startswith("experiment_state") and fname.endswith(".json"))
             for fname in os.listdir(directory))
+
+    @classmethod
+    def searcher_checkpoint_exists(cls, directory):
+        if not os.path.exists(directory):
+            return False
+        return any((fname.startswith("experiment_state_searcher_ckpt")
+                    and fname.endswith(".pkl"))
+                   for fname in os.listdir(directory))
 
     def add_experiment(self, experiment):
         if not self._resumed:

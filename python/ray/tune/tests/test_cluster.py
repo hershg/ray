@@ -491,7 +491,7 @@ tune.run(
     # Inspect the internal trialrunner
     runner = TrialRunner(
         resume="LOCAL", local_checkpoint_dir=local_checkpoint_dir)
-    trials = runner.get_rials()
+    trials = runner.get_trials()
     assert trials[0].last_result["training_iteration"] == 3
     assert trials[0].status == Trial.PENDING
 
